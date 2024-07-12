@@ -18,7 +18,7 @@ songs.get('/:id', async (req, res) => {
     const { id } = req.params;
     const song = await getOneSong(id)
 
-    if(song) {
+    if(song.id) {
         res.status(200).json(song)
     } else {
         res.status(404).json({error: "Song not found"})
@@ -28,7 +28,7 @@ songs.get('/:id', async (req, res) => {
 // Create Routes
 songs.post('/', checkSongName, checkArtistName, checkFavorite, async (req, res) => {
     const newSong = await createSong(req.body);
-    if(newSong) {
+    if(newSong.id) {
         res.status(200).json(newSong)
     } else {
         res.status(404).json({error: "Something went wrong"})
