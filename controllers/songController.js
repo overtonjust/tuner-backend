@@ -1,19 +1,30 @@
 // Dependencies
 const express = require('express');
 const songs = express.Router();
-const { getAllSongs, getOneSong, createSong } = require('../queries/songs');
+const { getAllSongs, getOneSong, createSong, updateSong, deleteSong, filterSongs } = require('../queries/songs');
 const { checkSongName, checkArtistName, checkFavorite } = require('../validations/checkSongs');
 
 // Read Routes
+
+/// Read all
 songs.get('/', async (req, res) => {
-    const allSongs = await getAllSongs();
-    if(allSongs){
-        res.status(200).json(allSongs)      
+    let songsList;
+    const filters = req.query;
+    const order = filters.order;
+    const favoriting = filters.is_favorite;
+    
+    if(order || favoriting !== undefined) {
+        songsList = await filterSongs(order, favoriting)
+        res.status(200).json(songsList)
+    } else if(order === undefined && favoriting === undefined) {
+        songsList = await getAllSongs();
+        res.status(200).json(songsList)
     } else {
         res.status(500).json({error: "Server Error"})
     }
 });
 
+/// Read one
 songs.get('/:id', async (req, res) => {
     const { id } = req.params;
     const song = await getOneSong(id)
@@ -25,6 +36,8 @@ songs.get('/:id', async (req, res) => {
     }
 });
 
+
+
 // Create Routes
 songs.post('/', checkSongName, checkArtistName, checkFavorite, async (req, res) => {
     const newSong = await createSong(req.body);
@@ -34,5 +47,31 @@ songs.post('/', checkSongName, checkArtistName, checkFavorite, async (req, res) 
         res.status(404).json({error: "Something went wrong"})
     }
 });
+
+// Update Route
+songs.put('/:id', checkSongName, checkArtistName, checkFavorite, async (req, res) => {
+    const { id } = req.params;
+    const songFound = await getOneSong(id);
+    if(songFound.id) {
+        const updatedSong = await updateSong(id, req.body);
+        res.status(200).json(updatedSong);
+    } else {
+        res.status(404).json({error: "Song not found"})
+    }
+});
+
+// Delete route
+songs.delete('/:id',  async (req,res) => {
+    const { id } = req.params;
+    const deletedSong = await deleteSong(id);
+
+    if(deletedSong.id) {
+        res.status(200).json(deletedSong)
+    } else {
+        res.status(404).json({error: "Song not found"})
+    }
+});
+
+
 
 module.exports = songs;
