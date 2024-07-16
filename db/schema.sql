@@ -8,6 +8,7 @@ CREATE TABLE tuner (
     name TEXT NOT NULL,
     artist TEXT NOT NULL,
     album TEXT,
+    genre Text NOT NULL,
     time TEXT,
     is_favorite BOOLEAN
 );

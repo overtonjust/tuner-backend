@@ -2,7 +2,7 @@
 const express = require('express');
 const songs = express.Router();
 const { getAllSongs, getOneSong, createSong, updateSong, deleteSong, filterSongs } = require('../queries/songs');
-const { checkSongName, checkArtistName, checkFavorite } = require('../validations/checkSongs');
+const { checkSongName, checkArtistName, checkGenre, checkFavorite } = require('../validations/checkSongs');
 
 // Read Routes
 
@@ -39,7 +39,7 @@ songs.get('/:id', async (req, res) => {
 
 
 // Create Routes
-songs.post('/', checkSongName, checkArtistName, checkFavorite, async (req, res) => {
+songs.post('/', checkSongName, checkArtistName, checkGenre, checkFavorite, async (req, res) => {
     const newSong = await createSong(req.body);
     if(newSong.id) {
         res.status(200).json(newSong)
@@ -49,7 +49,7 @@ songs.post('/', checkSongName, checkArtistName, checkFavorite, async (req, res) 
 });
 
 // Update Route
-songs.put('/:id', checkSongName, checkArtistName, checkFavorite, async (req, res) => {
+songs.put('/:id', checkSongName, checkArtistName, checkGenre, checkFavorite, async (req, res) => {
     const { id } = req.params;
     const songFound = await getOneSong(id);
     if(songFound.id) {
@@ -66,7 +66,7 @@ songs.delete('/:id',  async (req,res) => {
     const deletedSong = await deleteSong(id);
 
     if(deletedSong.id) {
-        res.status(200).json(deletedSong)
+        res.status(200).json({message: "Song successfully deleted"})
     } else {
         res.status(404).json({error: "Song not found"})
     }

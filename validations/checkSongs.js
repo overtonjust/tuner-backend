@@ -22,6 +22,18 @@ const checkArtistName = (req, res, next) => {
     }
 };
 
+const checkGenre = (req, res, next) => {
+    if(req.body.genre) {
+        if(typeof req.body.genre === 'string') {
+            return next();
+        } else {
+            res.status(400).json({error: "A Genre must be a string"})
+        }
+    } else {
+        res.status(400).json({error: "A genre of is required"})
+    }
+}
+
 const checkFavorite = (req, res, next) => {
     if( typeof req.body.is_favorite === 'boolean') {
         return next();
@@ -30,4 +42,4 @@ const checkFavorite = (req, res, next) => {
     }
 };
 
-module.exports = { checkSongName, checkArtistName, checkFavorite }
+module.exports = { checkSongName, checkArtistName, checkGenre, checkFavorite }
