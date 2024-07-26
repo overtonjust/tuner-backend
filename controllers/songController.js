@@ -1,46 +1,62 @@
 // Dependencies
 const express = require('express');
-const songs = express.Router();
-const { getAllSongs, getOneSong, createSong, updateSong, deleteSong, filterSongs } = require('../queries/songs');
-const { checkSongName, checkArtistName, checkGenre, checkFavorite } = require('../validations/checkSongs');
+const songs = express.Router({mergeParams: true});
+
+// Queries
+const { 
+    getAllSongs,
+    getOneSong,
+    createSong,
+    updateSong,
+    deleteSong, 
+} = require('../queries/songs');
+
+const {
+    getOneArtist,
+} = require('../queries/artists');
+
+// Validation
+const { 
+    checkSongName,
+    checkArtistName,
+    checkGenre, 
+    checkFavorite, 
+} = require('../validations/checkSongs');
 
 // Read Routes
 
 /// Read all
 songs.get('/', async (req, res) => {
-    let songsList;
-    const filters = req.query;
-    const order = filters.order;
-    const favoriting = filters.is_favorite;
-    
-    if(order || favoriting !== undefined) {
-        songsList = await filterSongs(order, favoriting)
-        res.status(200).json(songsList)
-    } else if(order === undefined && favoriting === undefined) {
-        songsList = await getAllSongs();
-        res.status(200).json(songsList)
+    const { artist_id } = req.params;
+    const artist = await getOneArtist(artist_id);
+    const songs = await getAllSongs(artist_id);
+
+    if(artist.id) {
+        res.status(200).json({...artist, songs});
     } else {
-        res.status(500).json({error: "Server Error"})
+        res.status(500).json({error: "Artist not found or server error"})
     }
 });
 
 /// Read one
 songs.get('/:id', async (req, res) => {
-    const { id } = req.params;
-    const song = await getOneSong(id)
+    const {  artist_id, id } = req.params;
+    const artist  = await getOneArtist(artist_id);
+    const song = await getOneSong(id);
 
-    if(song.id) {
-        res.status(200).json(song)
+    if(song) {
+        res.status(200).json({...artist, song})
     } else {
         res.status(404).json({error: "Song not found"})
     }
 });
 
 
-
 // Create Routes
 songs.post('/', checkSongName, checkArtistName, checkGenre, checkFavorite, async (req, res) => {
-    const newSong = await createSong(req.body);
+    const { artist_id } = req.params;
+    const newSong = await createSong({...req.body, artist_id});
+
     if(newSong.id) {
         res.status(200).json(newSong)
     } else {
@@ -50,10 +66,10 @@ songs.post('/', checkSongName, checkArtistName, checkGenre, checkFavorite, async
 
 // Update Route
 songs.put('/:id', checkSongName, checkArtistName, checkGenre, checkFavorite, async (req, res) => {
-    const { id } = req.params;
-    const songFound = await getOneSong(id);
-    if(songFound.id) {
-        const updatedSong = await updateSong(id, req.body);
+    const { id, artist_id } = req.params;
+    const updatedSong = await updateSong({id, artist_id, ...req.body});
+    
+    if(updatedSong.id) {
         res.status(200).json(updatedSong);
     } else {
         res.status(404).json({error: "Song not found"})
